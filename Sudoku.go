@@ -1,28 +1,26 @@
-// Sudoku project Sudoku.go
-package Sudoku
+package sudoku
 
 import (
 	"math/rand"
 )
 
 const (
-	boardSize        = 9
-	subdivisions     = 3
-	pHeight          = boardSize / subdivisions
-	height           = boardSize
-	pWidth           = boardSize / subdivisions
-	width            = boardSize
-	DefaultNumBlanks = 30
+	BoardSize    = 9
+	Subdivisions = 3
+	PHeight      = BoardSize / Subdivisions
+	Height       = BoardSize
+	PWidth       = BoardSize / Subdivisions
+	Width        = BoardSize
 )
 
 func Generate() [][]int {
-	return GenerateWithBlanks(DefaultNumBlanks)
+	return generateFinal()
 }
 
-func GenerateWithBlanks(numBlanks int) [][]int {
+func GenerateWithBlanks(numBlanks int) ([][]int, [][]int) {
 	final := generateFinal()
 	retVal := generatePartial(final, numBlanks)
-	return retVal
+	return retVal, final
 }
 
 func generatePartial(final [][]int, numBlanks int) [][]int {
@@ -63,64 +61,91 @@ func generatePartial(final [][]int, numBlanks int) [][]int {
 }
 
 func generateFinal() [][]int {
-	retVal := make([][]int, width)
-	for i := 0; i < width; i++ {
-		retVal[i] = make([]int, height)
-	}
-
-	for i := 0; i < width; i++ {
-		for j := 0; j < height; j++ {
-			usableNumbers := goodNumbers(i, j, retVal)
-			retVal[i][j] = usableNumbers[rand.Intn(len(usableNumbers))]
+	var success = false
+	var retVal [][]int
+	for !success {
+		success = true
+		retVal = make([][]int, Width)
+		for i := 0; i < len(retVal); i++ {
+			retVal[i] = make([]int, Height)
 		}
+
+		for i := 0; i < len(retVal); i++ {
+			for j := 0; j < len(retVal[i]); j++ {
+				usableNumbers := goodNumbers(i, j, retVal)
+				if len(usableNumbers) < 1 {
+					success = false
+					goto error
+				}
+				retVal[i][j] = usableNumbers[rand.Intn(len(usableNumbers))]
+			}
+		}
+	error:
 	}
 
 	return retVal
 }
 
 func goodNumbers(x int, y int, currentBoard [][]int) []int {
-	// TODO handle holders
-	var squareHolder = make([]int, 0, boardSize)
-	for i := 1; i <= boardSize; i++ {
-		squareHolder = append(squareHolder, i)
-	}
-	var lineHolderV = make([]int, 0, boardSize)
-	for i := 1; i <= boardSize; i++ {
-		lineHolderV = append(lineHolderV, i)
-	}
-	lineHolderH := make([]int, 0, boardSize)
-	for i := 1; i <= boardSize; i++ {
-		lineHolderH = append(lineHolderH, i)
-	}
+	var bad = make([]int, 0, BoardSize*3)
 
-	var retVal = make([]int, 0, boardSize)
-	for i := 1; i <= boardSize; i++ {
-		var useValue = true
-		for j := 0; j < len(squareHolder); j++ {
-			if squareHolder[j] == i {
-				useValue = false
+	{
+		var minX = 0
+		var minY = 0
+		for i := 0; i < BoardSize; i += (BoardSize / Subdivisions) {
+			if x >= i && x < (i+(BoardSize/Subdivisions)) {
+				minX = i
 				break
 			}
 		}
-		if useValue {
-			for j := 0; j < len(lineHolderV); j++ {
-				if lineHolderV[j] == i {
-					useValue = false
-					break
+		for i := 0; i < BoardSize; i += (BoardSize / Subdivisions) {
+			if y >= i && y < (i+(BoardSize/Subdivisions)) {
+				minY = i
+				break
+			}
+		}
+		for i := minX; i < (minX + (BoardSize / Subdivisions)); i++ {
+			for j := minY; j < (minY + (BoardSize / Subdivisions)); j++ {
+				val := currentBoard[i][j]
+				if val > 0 {
+					bad = append(bad, val)
 				}
 			}
 		}
-		if useValue {
-			for j := 0; j < len(lineHolderH); j++ {
-				if lineHolderH[j] == i {
-					useValue = false
-					break
-				}
+	}
+
+	for i := 0; i < BoardSize; i++ {
+		val := currentBoard[i][y]
+		if val > 0 {
+			bad = append(bad, val)
+		}
+	}
+
+	for i := 0; i < BoardSize; i++ {
+		val := currentBoard[x][i]
+		if val > 0 {
+			bad = append(bad, val)
+		}
+	}
+
+	var retVal = make([]int, 0, BoardSize)
+	for i := 1; i <= BoardSize; i++ {
+		retVal = append(retVal, i)
+	}
+
+	for i := 0; i < len(bad); i++ {
+		badVal := bad[i]
+		var j = 0
+		var isBad = false
+		for ; j < len(retVal); j++ {
+			if badVal == retVal[j] {
+				isBad = true
+				break
 			}
 		}
 
-		if useValue {
-			retVal = append(retVal, i)
+		if isBad {
+			retVal = append(retVal[:j], retVal[j+1:]...)
 		}
 	}
 	return retVal
