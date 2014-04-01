@@ -40,7 +40,14 @@ func generatePartial(final [][]int, numBlanks int) [][]int {
 		}
 	}
 
-	for i := 0; i < numBlanks; {
+	var num int
+	if fillWithNulls {
+		num = numSpaces - numBlanks
+	} else {
+		num = numBlanks
+	}
+
+	for i := 0; i < num; {
 		randX := rand.Intn(len(retVal))
 		randCol := retVal[randX]
 		randY := rand.Intn(len(randCol))
