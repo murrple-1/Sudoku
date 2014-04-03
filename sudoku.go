@@ -1,6 +1,8 @@
 package sudoku
 
 import (
+	"bytes"
+	"fmt"
 	"math/rand"
 )
 
@@ -11,16 +13,39 @@ const (
 	Height       = BoardSize
 	PWidth       = BoardSize / Subdivisions
 	Width        = BoardSize
+
+	GuessAlgorithm     = 0
+	BackTrackAlgorithm = 1
+	DefaultAlgorithm   = BackTrackAlgorithm
 )
 
 func Generate() [][]int {
-	return generateFinal()
+	return GenerateWithAlgorithm(DefaultAlgorithm)
+}
+
+func GenerateWithAlgorithm(algorithm int) [][]int {
+	return generateFinal(algorithm)
 }
 
 func GenerateWithBlanks(numBlanks int) ([][]int, [][]int) {
-	final := generateFinal()
+	return GenerateWithAlgorithmAndBlanks(DefaultAlgorithm, numBlanks)
+}
+
+func GenerateWithAlgorithmAndBlanks(algorithm int, numBlanks int) ([][]int, [][]int) {
+	final := generateFinal(algorithm)
 	retVal := generatePartial(final, numBlanks)
 	return retVal, final
+}
+
+func generateFinal(algorithm int) [][]int {
+	switch algorithm {
+	case GuessAlgorithm:
+		return generateFinal_guessAlgorithm()
+	case BackTrackAlgorithm:
+		return generateFinal_backtrackAlgorithm()
+	default:
+		return nil
+	}
 }
 
 func generatePartial(final [][]int, numBlanks int) [][]int {
@@ -42,9 +67,9 @@ func generatePartial(final [][]int, numBlanks int) [][]int {
 
 	var num int
 	if fillWithNulls {
-		num = numSpaces - numBlanks
-	} else {
 		num = numBlanks
+	} else {
+		num = numSpaces - numBlanks
 	}
 
 	for i := 0; i < num; {
@@ -67,7 +92,7 @@ func generatePartial(final [][]int, numBlanks int) [][]int {
 	return retVal
 }
 
-func generateFinal() [][]int {
+func generateFinal_guessAlgorithm() [][]int {
 	var success = false
 	var retVal [][]int
 	for !success {
@@ -91,6 +116,48 @@ func generateFinal() [][]int {
 	}
 
 	return retVal
+}
+
+func generateFinal_backtrackAlgorithm() [][]int {
+	retVal := make([][]int, Width)
+	for i := 0; i < len(retVal); i++ {
+		retVal[i] = make([]int, Height)
+	}
+
+	backtrackAlgorithmRecurse(retVal, 0, 0, Width, Height)
+
+	return retVal
+}
+
+func backtrackAlgorithmRecurse(retVal [][]int, x int, y int, maxX int, maxY int) bool {
+	var usableNumbers = goodNumbers(x, y, retVal)
+	if len(usableNumbers) < 1 {
+		return false
+	} else {
+		length := len(usableNumbers)
+		for i := 0; i < length; i++ {
+			index := rand.Intn(len(usableNumbers))
+			retVal[x][y] = usableNumbers[index]
+
+			var nextX = x + 1
+			var nextY = y
+			if nextX >= maxX {
+				nextX = 0
+				nextY++
+			}
+			if nextY >= maxY {
+				return true
+			}
+			isSuccess := backtrackAlgorithmRecurse(retVal, nextX, nextY, maxX, maxY)
+			if isSuccess {
+				return true
+			} else {
+				retVal[x][y] = 0
+				usableNumbers = append(usableNumbers[:index], usableNumbers[index+1:]...)
+			}
+		}
+	}
+	return false
 }
 
 func goodNumbers(x int, y int, currentBoard [][]int) []int {
@@ -156,4 +223,26 @@ func goodNumbers(x int, y int, currentBoard [][]int) []int {
 		}
 	}
 	return retVal
+}
+
+func SudokuString(board [][]int) string {
+	buffer := bytes.Buffer{}
+	for i := 0; i < len(board); i++ {
+		var prefix = ""
+		for j := 0; j < len(board[i]); j++ {
+			outStr := fmt.Sprintf("%v%d", prefix, board[i][j])
+			buffer.WriteString(outStr)
+			prefix = " "
+		}
+		if i != (len(board) - 1) {
+			outStr := fmt.Sprintf("\n")
+			buffer.WriteString(outStr)
+		}
+	}
+	return buffer.String()
+}
+
+func PrintSudoku(board [][]int) {
+	printStr := SudokuString(board)
+	fmt.Printf(printStr)
 }
