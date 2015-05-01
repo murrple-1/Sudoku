@@ -19,10 +19,14 @@ func printOutput(output [][]int) {
 	fmt.Printf("\n")
 }
 
-func printAnswerAndOutput(answer [][]int, output [][]int) {
+func printAnswer(answer [][]int) {
 	fmt.Printf("Answer:\n")
 	PrintSudoku(answer)
 	fmt.Printf("\n")
+}
+
+func printAnswerAndOutput(answer [][]int, output [][]int) {
+	printAnswer(answer)
 	printOutput(output)
 }
 
@@ -111,5 +115,22 @@ func TestGenerateWithBlanks_backtrackAlgorithm(t *testing.T) {
 
 	if blanks != MidBlanks {
 		t.Errorf("Incorrect Numer of Blanks: %d - Expected: %d", blanks, MidBlanks)
+	}
+}
+
+func TestSolve(t *testing.T) {
+	rand.Seed(time.Now().UnixNano())
+	fmt.Printf("Solving...\n")
+	output, answer := GenerateWithBlanks(MidBlanks)
+	var blanks, _ = countSudokuSquares(output)
+	if blanks != MidBlanks {
+		t.Errorf("Incorrect Numer of Blanks: %d - Expected: %d", blanks, MidBlanks)
+	}
+	printAnswerAndOutput(answer, output)
+	Solve(output)
+	printOutput(output)
+	blanks, _ = countSudokuSquares(output)
+	if blanks != 0 {
+		t.Errorf("Did not solve!")
 	}
 }

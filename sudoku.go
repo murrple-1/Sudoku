@@ -37,6 +37,73 @@ func GenerateWithAlgorithmAndBlanks(algorithm int, numBlanks int) ([][]int, [][]
 	return retVal, final
 }
 
+func Solve(board [][]int) {
+	maxX := Width
+	maxY := Height
+	var firstX = 0
+	var firstY = 0
+	var needsSolving = false
+	for {
+		if firstX >= maxX {
+			firstX = 0
+			firstY++
+		}
+		if firstY >= maxY {
+			break
+		}
+		if board[firstX][firstY] < 1 {
+			needsSolving = true
+			break
+		}
+		firstX++
+	}
+
+	if needsSolving {
+		solveRecurse(board, firstX, firstY, maxX, maxY)
+	}
+}
+
+func solveRecurse(board [][]int, x int, y int, maxX int, maxY int) bool {
+	var nextX = x + 1
+	var nextY = y
+
+	var lastSpace = true
+	for {
+		if nextX >= maxX {
+			nextX = 0
+			nextY++
+		}
+		if nextY >= maxY {
+			break
+		}
+		if board[nextX][nextY] < 1 {
+			lastSpace = false
+			break
+		}
+		nextX++
+	}
+
+	usableNumbers := goodNumbers(x, y, board)
+	length := len(usableNumbers)
+	if length < 1 {
+		return false
+	} else {
+		for i := 0; i < length; i++ {
+			board[x][y] = usableNumbers[i]
+			if lastSpace {
+				return true
+			} else {
+				isSuccess := solveRecurse(board, nextX, nextY, maxX, maxY)
+				if isSuccess {
+					return true
+				}
+			}
+			board[x][y] = 0
+		}
+		return false
+	}
+}
+
 func generateFinal(algorithm int) [][]int {
 	switch algorithm {
 	case GuessAlgorithm:
@@ -131,10 +198,10 @@ func generateFinal_backtrackAlgorithm() [][]int {
 
 func backtrackAlgorithmRecurse(retVal [][]int, x int, y int, maxX int, maxY int) bool {
 	var usableNumbers = goodNumbers(x, y, retVal)
-	if len(usableNumbers) < 1 {
+	length := len(usableNumbers)
+	if length < 1 {
 		return false
 	} else {
-		length := len(usableNumbers)
 		for i := 0; i < length; i++ {
 			index := rand.Intn(len(usableNumbers))
 			retVal[x][y] = usableNumbers[index]
