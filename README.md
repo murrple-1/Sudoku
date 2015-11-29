@@ -2,7 +2,7 @@ Sudoku
 ======
 This library generates Sudoku puzzles in golang. By default, it uses the standard backtrack algorithm to quickly create valid boards. However, there is also an option to use an experimental non-deterministic algorithm that I developed.
 
-## Backtrank Algorithm
+## Backtrack Algorithm
 It works through a recursive algorithm, which will ensure that if a dead-end is hit in the generation, it will roll back up the recursion, trying new numbers and continuing to back track until it succeeds.
 
 ## Guess Algorithm
